@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>포켓몬 카드 재고 현황</title>
+<style>
+  :root { --bg:#f5f6f8; --card:#fff; --ink:#1b1e23; --muted:#667085; --line:#e4e7ec; --accent:#2563eb; --ok:#15803d; --warn:#b45309; --chip:#eef2ff; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#121418; --card:#1b1e24; --ink:#eef0f3; --muted:#9aa3b2; --line:#2a2f38; --accent:#7aa2ff; --ok:#4ade80; --warn:#fbbf24; --chip:#222a44; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif; }
+  main { max-width: 640px; margin: 0 auto; padding: 20px 16px 48px; }
+  h1 { font-size: 20px; margin: 4px 0 2px; }
+  .meta { color: var(--muted); font-size: 14px; margin-bottom: 16px; }
+  .stale { color: var(--warn); font-weight: 600; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 14px 6px; margin-bottom: 14px; }
+  .card h2 { font-size: 17px; margin: 0 0 2px; display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+  .total { font-size: 14px; color: var(--ok); font-weight: 600; white-space: nowrap; }
+  .place { margin: 12px 0 4px; font-size: 13px; font-weight: 700; color: var(--accent); }
+  ul { list-style: none; margin: 0 0 8px; padding: 0; }
+  li { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: baseline; padding: 7px 0; border-top: 1px solid var(--line); }
+  li:first-child { border-top: 0; }
+  .chain { font-size: 12px; background: var(--chip); border-radius: 999px; padding: 1px 8px; white-space: nowrap; }
+  .store { overflow-wrap: anywhere; }
+  .store small { color: var(--muted); }
+  .qty { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .empty { color: var(--muted); padding: 24px 0; text-align: center; }
+  .note { color: var(--muted); font-size: 12.5px; margin-top: 18px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>포켓몬 카드 재고 현황</h1>
+  <div class="meta" id="meta">불러오는 중…</div>
+  <div id="list"></div>
+  <p class="note">편의점 앱의 시스템 재고입니다. 실제 진열과 다를 수 있고, 입고 처리가 물건 도착보다 먼저 올라갈 수 있어요. 가시기 전에 점포에 확인해 주세요.</p>
+</main>
+<script>
+(function () {
+  var STALE_MIN = 25;   // 이보다 오래 갱신이 없으면 경고
+  var meta = document.getElementById('meta');
+  var list = document.getElementById('list');
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  function ago(min) {
+    if (min < 1) return '방금';
+    if (min < 60) return Math.floor(min) + '분 전';
+    return Math.floor(min / 60) + '시간 ' + Math.floor(min % 60) + '분 전';
+  }
+
+  function render(d) {
+    var t = new Date(d.generated_at);
+    var min = (Date.now() - t.getTime()) / 60000;
+    meta.textContent = '';
+    meta.appendChild(document.createTextNode('마지막 갱신 ' + ago(min) + ' · 1분마다 자동으로 새로 불러와요'));
+    if (min > STALE_MIN) {
+      meta.appendChild(el('div', 'stale', '갱신이 25분 넘게 멈춰 있어요. 아래 숫자가 오래됐을 수 있어요.'));
+    }
+    list.textContent = '';
+    var rows = d.rows || [];
+    if (!rows.length) {
+      list.appendChild(el('div', 'empty', '지금 재고가 있는 점포가 없어요.'));
+      return;
+    }
+    (d.order || []).forEach(function (g) {
+      var items = rows.filter(function (r) { return r.group === g; });
+      if (!items.length) return;
+      var total = items.reduce(function (s, r) { return s + r.qty; }, 0);
+      var card = el('section', 'card');
+      var h = el('h2');
+      h.appendChild(el('span', null, g));
+      h.appendChild(el('span', 'total', items.length + '곳 · ' + total + '개'));
+      card.appendChild(h);
+      (d.places || []).forEach(function (p) {
+        var here = items.filter(function (r) { return r.place === p; });
+        if (!here.length) return;
+        card.appendChild(el('div', 'place', p + ' 거점'));
+        var ul = el('ul');
+        here.forEach(function (r) {
+          var li = el('li');
+          li.appendChild(el('span', 'chain', r.chain));
+          var s = el('span', 'store', r.store + ' ');
+          s.appendChild(el('small', null, r.dist + 'm'));
+          li.appendChild(s);
+          li.appendChild(el('span', 'qty', r.qty + '개'));
+          ul.appendChild(li);
+        });
+        card.appendChild(ul);
+      });
+      list.appendChild(card);
+    });
+  }
+
+  function load() {
+    fetch('status.json?t=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (d) { if (!d.generated_at) { meta.textContent = '아직 데이터가 없어요.'; return; } render(d); })
+      .catch(function () { meta.textContent = '불러오지 못했어요. 잠시 뒤 다시 시도해요.'; });
+  }
+  load();
+  setInterval(load, 60000);
+})();
+</script>
+</body>
+</html>
