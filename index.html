@@ -28,6 +28,7 @@
   .store small { color: var(--muted); }
   .qty { font-weight: 700; font-variant-numeric: tabular-nums; }
   li.sold { opacity: .6; }
+  .soldhead { color: var(--warn); margin-top: 14px; }
   li.sold .qty { color: var(--warn); font-weight: 600; font-size: 14px; white-space: nowrap; }
   .empty { color: var(--muted); padding: 24px 0; text-align: center; }
   .note { color: var(--muted); font-size: 12.5px; margin-top: 18px; }
@@ -85,7 +86,7 @@
       h.appendChild(el('span', 'total', live.length + '곳 · ' + total + '개' + (soldN ? ' · 품절 ' + soldN + '곳' : '')));
       card.appendChild(h);
       (d.places || []).forEach(function (p) {
-        var here = items.filter(function (r) { return r.place === p; });
+        var here = live.filter(function (r) { return r.place === p; });
         if (!here.length) return;
         card.appendChild(el('div', 'place', p + ' 거점'));
         var ul = el('ul');
@@ -100,6 +101,21 @@
         });
         card.appendChild(ul);
       });
+      var gone = items.filter(function (r) { return r.qty <= 0; });
+      if (gone.length) {
+        card.appendChild(el('div', 'place soldhead', '품절 (12시간 동안 표시)'));
+        var ul2 = el('ul');
+        gone.forEach(function (r) {
+          var li = el('li', 'sold');
+          li.appendChild(el('span', 'chain', r.chain));
+          var s = el('span', 'store', r.store + ' ');
+          s.appendChild(el('small', null, r.place + ' · ' + r.dist + 'm'));
+          li.appendChild(s);
+          li.appendChild(el('span', 'qty', new Date(r.sold_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false })));
+          ul2.appendChild(li);
+        });
+        card.appendChild(ul2);
+      }
       list.appendChild(card);
     });
   }
