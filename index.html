@@ -43,7 +43,7 @@
 </main>
 <script>
 (function () {
-  var STALE_MIN = 25;   // 이보다 오래 갱신이 없으면 경고
+  var STALE_MIN = 40;   // 이보다 오래 갱신이 없으면 경고(올리는 쪽은 최소 15분마다 올린다)
   var meta = document.getElementById('meta');
   var list = document.getElementById('list');
 
@@ -66,7 +66,7 @@
     meta.textContent = '';
     meta.appendChild(document.createTextNode('마지막 갱신 ' + ago(min) + ' · 1분마다 자동으로 새로 불러와요'));
     if (min > STALE_MIN) {
-      meta.appendChild(el('div', 'stale', '갱신이 25분 넘게 멈춰 있어요. 아래 숫자가 오래됐을 수 있어요.'));
+      meta.appendChild(el('div', 'stale', '갱신이 40분 넘게 멈춰 있어요. 아래 숫자가 오래됐을 수 있어요.'));
     }
     list.textContent = '';
     var rows = d.rows || [];
