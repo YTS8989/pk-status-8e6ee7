@@ -5,7 +5,7 @@ self.addEventListener('activate', function (e) { e.waitUntil(self.clients.claim(
 self.addEventListener('push', function (e) {
   var d = {};
   try { d = e.data.json(); } catch (_) { d = { body: e.data ? e.data.text() : '' }; }
-  e.waitUntil(self.registration.showNotification(d.title || '포켓몬 재고', { body: d.body || '', icon: 'icon-180.png', data: { url: d.url || './' } }));
+  e.waitUntil(self.registration.showNotification(d.title || '포켓몬 재고', { body: d.body || '', icon: 'icon-180.png', silent: !!d.silent, data: { url: d.url || './' } }));
 });
 
 self.addEventListener('notificationclick', function (e) {
