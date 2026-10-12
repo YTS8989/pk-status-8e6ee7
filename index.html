@@ -27,6 +27,7 @@
   .store { overflow-wrap: anywhere; }
   .store small { color: var(--muted); }
   .qty { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .qty small { font-weight: 400; color: var(--muted); }
   li.sold { opacity: .6; }
   .soldhead { color: var(--warn); margin-top: 14px; }
   li.sold .qty { color: var(--warn); font-weight: 600; font-size: 14px; white-space: nowrap; }
@@ -39,7 +40,7 @@
   <h1>포켓몬 카드 재고 현황</h1>
   <div class="meta" id="meta">불러오는 중…</div>
   <div id="list"></div>
-  <p class="note">편의점 앱의 시스템 재고입니다. 실제 진열과 다를 수 있고, 입고 처리가 물건 도착보다 먼저 올라갈 수 있어요. 품절 표시는 12시간 동안 남겨 둡니다. 가시기 전에 점포에 확인해 주세요.</p>
+  <p class="note">편의점 앱의 시스템 재고입니다. 실제 진열과 다를 수 있고, 입고 처리가 물건 도착보다 먼저 올라갈 수 있어요. GS25는 앱에 실제의 약 70%만 보이는 것으로 추정해 옆에 환산값을 적었어요. 품절 표시는 12시간 동안 남겨 둡니다. 가시기 전에 점포에 확인해 주세요.</p>
 </main>
 <script>
 (function () {
@@ -99,7 +100,9 @@
           var s = el('span', 'store', r.store + ' ');
           s.appendChild(el('small', null, r.dist + 'm'));
           li.appendChild(s);
-          li.appendChild(el('span', 'qty', r.qty > 0 ? r.qty + '개' : '품절 ' + new Date(r.sold_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false })));
+          var q = el('span', 'qty', r.qty > 0 ? r.qty + '개' : '품절 ' + new Date(r.sold_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }));
+          if (r.chain === 'GS25' && r.qty > 0) q.appendChild(el('small', null, ' 실제 약 ' + Math.round(r.qty / 0.7) + '개'));  // GS25 앱은 실제의 약 70%만 보여 준다는 추정
+          li.appendChild(q);
           ul.appendChild(li);
         });
         card.appendChild(ul);
