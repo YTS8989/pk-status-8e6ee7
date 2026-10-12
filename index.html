@@ -54,7 +54,7 @@
 </main>
 <script>
 (function () {
-  var STALE_MIN = 40;   // 이보다 오래 갱신이 없으면 경고(올리는 쪽은 1분마다 확인하고, 바뀌면 바로·안 바뀌어도 10분마다 올린다)
+  var STALE_MIN = 40;   // 이보다 오래 갱신이 없으면 경고(올리는 쪽은 1분마다 확인하고, 바뀌면 바로·안 바뀌어도 5분마다 올린다)
   var meta = document.getElementById('meta');
   var list = document.getElementById('list');
 
@@ -75,7 +75,7 @@
     var t = new Date(d.generated_at);
     var min = (Date.now() - t.getTime()) / 60000;
     meta.textContent = '';
-    meta.appendChild(document.createTextNode(ago(min) + ' 기준 · 입고·품절은 3분 안에, 남은 수량은 몇 분 늦게 반영돼요'));
+    meta.appendChild(document.createTextNode(ago(min) + ' 기준 · 재고가 바뀌면 1~2분 안에 반영돼요'));
     if (min > STALE_MIN) {
       meta.appendChild(el('div', 'stale', '갱신이 40분 넘게 멈춰 있어요. 아래 숫자가 오래됐을 수 있어요.'));
     }
@@ -137,8 +137,14 @@
   }
 
   function load() {
-    fetch('status.json?t=' + Date.now(), { cache: 'no-store' })
+    // 현황은 저장소의 data 가지에 1분 단위로 올라온다. 깃허브 API로 바로 읽고(1분 안쪽으로 새 값), 막히면 raw 주소(최대 5분 늦음)로 읽는다.
+    // 페이지 자체(main 가지)를 다시 짓지 않아도 돼서 예전처럼 10분씩 늦지 않는다.
+    fetch('https://api.github.com/repos/YTS8989/pk-status-8e6ee7/contents/status.json?ref=data', { headers: { Accept: 'application/vnd.github.raw+json' } })
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .catch(function () {
+        return fetch('https://raw.githubusercontent.com/YTS8989/pk-status-8e6ee7/data/status.json?t=' + Date.now(), { cache: 'no-store' })
+          .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); });
+      })
       .then(function (d) { if (!d.generated_at) { meta.textContent = '아직 데이터가 없어요.'; return; } render(d); })
       .catch(function () { meta.textContent = '불러오지 못했어요. 잠시 뒤 다시 시도해요.'; });
   }
