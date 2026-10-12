@@ -68,6 +68,9 @@
     if (min > STALE_MIN) {
       meta.appendChild(el('div', 'stale', '갱신이 40분 넘게 멈춰 있어요. 아래 숫자가 오래됐을 수 있어요.'));
     }
+    if (d.failed && d.failed.length) {
+      meta.appendChild(el('div', 'stale', d.failed.join('·') + ' 조회가 잠깐 안 돼서 직전 값을 보여 줘요.'));
+    }
     list.textContent = '';
     var rows = d.rows || [];
     if (!rows.length) {
