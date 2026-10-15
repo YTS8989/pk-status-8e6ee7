@@ -76,6 +76,7 @@
     var min = (Date.now() - t.getTime()) / 60000;
     meta.textContent = '';
     meta.appendChild(document.createTextNode(ago(min) + ' 기준 · 재고가 바뀌면 1~2분 안에 반영돼요'));
+    if ((d.places || []).length) meta.appendChild(el('div', null, '보는 곳: ' + d.places.join('·')));
     if (min > STALE_MIN) {
       meta.appendChild(el('div', 'stale', '갱신이 40분 넘게 멈춰 있어요. 아래 숫자가 오래됐을 수 있어요.'));
     }
