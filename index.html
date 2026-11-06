@@ -83,6 +83,9 @@
     if (d.failed && d.failed.length) {
       meta.appendChild(el('div', 'stale', d.failed.join('·') + ' 조회가 잠깐 안 돼서 직전 값을 보여 줘요.'));
     }
+    if (d.notice) {
+      meta.appendChild(el('div', 'stale', d.notice));
+    }
     list.textContent = '';
     var rows = d.rows || [];
     if (!rows.length) {
